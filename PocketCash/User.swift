@@ -14,6 +14,11 @@ class User: NSObject {
     let surname: String
     let date: String
     let gender: String
+   // let image: UInt8
+    
+//    convenience init(name: String, surname: String, date: String, gender: String) {
+//        self.init(name: name, surname: surname, date: date, gender: gender)
+//    }
     
     init(name: String, surname: String, date: String, gender: String) {
         self.name = name
@@ -22,11 +27,11 @@ class User: NSObject {
         self.gender = gender
     }
     
-//    func json() -> JSON {
-//        let dict = ["name" : self.name,
-//                    "surname" : self.surname,
-//                    "date" : self.date,
-//                    "gender" : self.gender] as [String: Any?]
-//        return JSON(dict)
-//    }
+    func json() -> JSON {
+        let dict = ["name" : self.name,
+                    "surname" : self.surname,
+                    "date" : self.date,
+                    "gender" : self.gender] as [String: Any?]
+        return JSON(dict)
+    }
 }
