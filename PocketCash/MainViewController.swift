@@ -9,31 +9,9 @@
 import UIKit
 import SwiftyJSON
 
-class MyCell:UITableViewCell{
-    @IBOutlet weak var pocketOrTargeImage: UIImageView!
-    @IBOutlet weak var pocketOrTargeLabel: UILabel!
-    @IBOutlet weak var summLabel: UILabel!
-}
+class MainViewController: UIViewController {
 
-class MainViewController: UIViewController,UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        var cell = tableView.dequeueReusableCell(withIdentifier: "targeOrCash", for: indexPath) as! MyCell
-        //cell.cellImage?.image = UIImage(named: "balanc_plus_icon")!
-        print("income:  \(tableData[indexPath.row]["income"]!)")
-        cell.pocketOrTargeImage?.image = UIImage(named: "accessory")!
-        cell.pocketOrTargeLabel?.text = "Кошелек новый"
-      //  cell.cellCash?.text = tableData[indexPath.row]["cash"]!
-        cell.summLabel?.text = tableData[indexPath.row]["date"]!
-       // cell.cellTitle?.text = tableData[indexPath.row]["comment"]!
-        return cell
-    }
-    
-
-//    @IBOutlet weak var currentCash: UILabel!
+    @IBOutlet weak var currentCash: UILabel!
     @IBOutlet weak var userName: UILabel!
     
     var currentBalanc: Int = 0
@@ -87,6 +65,6 @@ class MainViewController: UIViewController,UITableViewDelegate, UITableViewDataS
                 }
             }
         }
-        //currentCash.text = String(self.currentBalanc)
+        currentCash.text = String(self.currentBalanc)
     }
 }
