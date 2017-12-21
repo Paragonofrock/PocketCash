@@ -15,7 +15,7 @@ class DataBaseService: NSObject {
     var dbQueue: DatabaseQueue?
     let cursor = DataBaseCursor()
     
-    // MARK: Create Table In DB
+    // MARK: Create Table
     override init() {
         do {
             let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
@@ -39,10 +39,6 @@ class DataBaseService: NSObject {
                                 ON transactionTable(date)
                                 """)
                 try db.execute("""
-                                CREATE INDEX pursesAndTargetsIndex
-                                ON transactionTable(purseOrTarget)
-                                """)
-                try db.execute("""
                                 CREATE TABLE IF NOT EXISTS user (
                                     name TEXT NOT NULL,
                                     surname TEXT NOT NULL,
@@ -51,8 +47,7 @@ class DataBaseService: NSObject {
                                 """)
                 try db.execute("""
                                 CREATE TABLE IF NOT EXISTS pursesAndTargets (
-                                    id INTEGER PRIMARY KEY,
-                                    namePurseOrTarget TEXT,
+                                    namePurseOrTarget TEXT PRIMARY KEY,
                                     amountCash DOUBLE NOT NULL,
                                     isPurse BOOLEAN NOT NULL)
                                 """)
@@ -80,84 +75,84 @@ class DataBaseService: NSObject {
                                 CREATE TRIGGER insertTransactin BEFORE INSERT
                                 ON transactionTable
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'INSERT into transaction\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('INSERT into transaction', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER insertCategory BEFORE INSERT
                                 ON category
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'INSERT into category\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('INSERT into category', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER insertUser BEFORE INSERT
                                 ON user
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'INSERT into user\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('INSERT into user', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER insertPursesAndTargets BEFORE INSERT
                                 ON pursesAndTargets
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'INSERT into pursesAndTargets\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('INSERT into pursesAndTargets', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER updateTransaction BEFORE UPDATE
                                 ON transactionTable
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'UPDATE into transaction\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('UPDATE into transaction', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER updateCategory BEFORE UPDATE
                                 ON category
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'UPDATE into category\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('UPDATE into category', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER updateUser BEFORE UPDATE
                                 ON user
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'UPDATE into user\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('UPDATE into user', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER updatePursesAndTargets BEFORE UPDATE
                                 ON pursesAndTargets
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'UPDATE into pursesAndTargets\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('UPDATE into pursesAndTargets', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER deleteTransaction BEFORE DELETE
                                 ON transactionTable
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'DELETE into transaction\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('DELETE into transaction', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER deleteCategory BEFORE DELETE
                                 ON category
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'DELETE into category\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('DELETE into category', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER deleteUser BEFORE DELETE
                                 ON user
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'DELETE into user\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('DELETE into user', datetime('now'));
                                 END
                                 """)
                 try db.execute("""
                                 CREATE TRIGGER deletePursesAndTargets BEFORE DELETE
                                 ON pursesAndTargets
                                 BEGIN
-                                INSERT INTO logger(descriptionLog, date) VALUES (\'DELETE into pursesAndTargets\', datetime(\'now\'));
+                                INSERT INTO logger(descriptionLog, date) VALUES ('DELETE into pursesAndTargets', datetime('now'));
                                 END
                                 """)
 
@@ -168,24 +163,17 @@ class DataBaseService: NSObject {
         }
     }
     
-    // MARK: Delete Table Transaction
-    func deleteAllTransaction() {
-        do {
-            try self.dbQueue?.inDatabase { db in
-                let deleteAllTransaction = try String.fetchAll(db, "DELETE FROM transactionTable")
-                print("DeleteCashOperation = \(deleteAllTransaction)")
-            }
-        } catch let error as DatabaseError {
-            NSLog("Failed to delete all elements from datebase")
-            NSLog("Error: \(String(describing: error.message))")
-            NSLog("Request: \(String(describing: error.sql))")
-        } catch {
-            NSLog("Failed to delete all elements from datebase")
-            NSLog("Error: unknown error")
-        }
+    func getCashOperation(fromRow row: Row) -> CashOperation {
+        let id: Int = Int(arc4random())
+        let cash: Int = row["cash"]
+        let date: String = row["date"]
+        let comment: String = row["comment"]
+        let income: Bool = row["income"]
+        let category: String = row["category"]
+        
+        return CashOperation(id: id, cash: cash, date: date, comment: comment, income: income, category: category)
     }
     
-    // MARK: Check Existing DB
     func checkExistingDB() -> Bool {
         var isUsed = false
         do {
@@ -206,8 +194,8 @@ class DataBaseService: NSObject {
             try self.dbQueue?.inDatabase { db in
                 try db.execute(
                         "INSERT INTO transactionTable (cash, date, comment, category, purseOrTarget) " +
-                        "VALUES (?, date(\'now\'), ?, ?, ?)",
-                        arguments: [transaction.cash, transaction.comment, transaction.category, transaction.purseOrTarget])
+                        "VALUES (?, ?, ?, ?, ?)",
+                        arguments: [transaction.cash, transaction.date, transaction.comment, transaction.category, transaction.purseOrTarget])
                     NSLog("CashOperation with date \(transaction.date) was inserted")
             }
         } catch let error as DatabaseError {
@@ -244,8 +232,8 @@ class DataBaseService: NSObject {
             try self.dbQueue?.inDatabase { db in
                 try db.execute(
                     "INSERT INTO pursesAndTargets (namePurseOrTarget, amountCash, isPurse) " +
-                    "VALUES (?, 0, ?)",
-                    arguments: [purseOrTarget.name, purseOrTarget.isPurse])
+                    "VALUES (?, ?, ?)",
+                    arguments: [purseOrTarget.name, purseOrTarget.amountCash, purseOrTarget.isPurse])
                 if (purseOrTarget.isPurse) {
                     NSLog("Purse \(purseOrTarget.name) was inserted")
                 } else {
@@ -282,117 +270,38 @@ class DataBaseService: NSObject {
         }
     }
     
-    // MARK: Update Into Table
-    func updateTransaction(transaction: Transaction) {
+    func deleteAllCashOperation() {
         do {
             try self.dbQueue?.inDatabase { db in
-                try db.execute("""
-                        UPDATE transactionTable
-                        SET cash = \(transaction.cash),
-                            comment = \(transaction.comment),
-                            category = \(transaction.category)
-                        WHERE id = \(transaction.id)
-                        """)
-                NSLog("Transactin with date \(transaction.date) was updated")
+                let deleteAllCashOperation = try String.fetchAll(db, "DELETE FROM pocketCash")
+                print("DeleteCashOperation = \(deleteAllCashOperation)")
             }
         } catch let error as DatabaseError {
-            NSLog("Failed to insert new cashOperation to datebase.")
+            NSLog("Failed to delete all elements from datebase")
             NSLog("Error: \(String(describing: error.message))")
             NSLog("Request: \(String(describing: error.sql))")
         } catch {
-            NSLog("Failed to insert new cashOperation to datebase.")
+            NSLog("Failed to delete all elements from datebase")
             NSLog("Error: unknown error")
         }
     }
     
-    func updateUser(user: User) {
+    func readCashOperation() -> [CashOperation] {
+        var cashOperations: [CashOperation] = []
         do {
             try self.dbQueue?.inDatabase { db in
-                try db.execute("""
-                    UPDATE user
-                    SET name = \(user.name),
-                        surname = \(user.surname),
-                        date = \(user.date),
-                        gender = \(user.gender)
-                """)
-                NSLog("User with name \(user.name) was updated")
-            }
-        } catch let error as DatabaseError {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: \(String(describing: error.message))")
-            NSLog("Request: \(String(describing: error.sql))")
-        } catch {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: unknown error")
-        }
-    }
-    
-    func updatePurseOrTarger(purseOrTarget: PurseOrTarget) {
-        do {
-            try self.dbQueue?.inDatabase { db in
-                try db.execute("""
-                        UPDATE pursesAndTargets
-                        SET namePurseOrTarget = \(purseOrTarget.name)
-                        WHERE id = \(purseOrTarget.id)
-                    """)
-                if (purseOrTarget.isPurse) {
-                    NSLog("Purse \(purseOrTarget.name) was updated")
-                } else {
-                    NSLog("Target \(purseOrTarget.name) was updated")
+                let rows = try Row.fetchCursor(db, "SELECT * FROM pocketCash")
+                while let row = try rows.next() {
+                    let cashOperation = self.getCashOperation(fromRow: row)
+                    cashOperations.append(cashOperation)
+                    print("last cashOperation: \(cashOperation)")
                 }
+                print("cashOperations: \(cashOperations)")
             }
-        } catch let error as DatabaseError {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: \(String(describing: error.message))")
-            NSLog("Request: \(String(describing: error.sql))")
         } catch {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: unknown error")
+            NSLog("Failed to read from database")
         }
-    }
-    
-    func updatePurseOrTargerAfterTransaction(purseOrTarget: PurseOrTarget,transaction: Transaction) {
-        do {
-            try self.dbQueue?.inDatabase { db in
-                try db.execute("""
-                    UPDATE pursesAndTargets
-                    SET amountCash = \(purseOrTarget.amountCash) + tr
-                    WHERE id = \(purseOrTarget.id)
-                    """)
-                if (purseOrTarget.isPurse) {
-                    NSLog("Purse \(purseOrTarget.name) was updated")
-                } else {
-                    NSLog("Target \(purseOrTarget.name) was updated")
-                }
-            }
-        } catch let error as DatabaseError {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: \(String(describing: error.message))")
-            NSLog("Request: \(String(describing: error.sql))")
-        } catch {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: unknown error")
-        }
-    }
-    
-    //Изменить: мы не можем изменять PK. Нужно удалить и заново вставить
-    func updateCategory(category: Category) {
-        do {
-            try self.dbQueue?.inDatabase { db in
-                try db.execute(
-                    "INSERT INTO category (nameCategory) " +
-                    "VALUES (?)",
-                    arguments: [category.nameCategory])
-                NSLog("Category \(category.nameCategory) was inserted")
-            }
-        } catch let error as DatabaseError {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: \(String(describing: error.message))")
-            NSLog("Request: \(String(describing: error.sql))")
-        } catch {
-            NSLog("Failed to insert new cashOperation to datebase.")
-            NSLog("Error: unknown error")
-        }
+        return cashOperations
     }
     
     // MARK: Get Function
@@ -414,49 +323,11 @@ class DataBaseService: NSObject {
         return userInfo
     }
     
-    func getPursesAndTargets() -> [PurseOrTarget] {
-        var pursesAndTarget: [PurseOrTarget] = []
-        do {
-            try self.dbQueue?.inDatabase { db in
-                let rows = try Row.fetchCursor(db, "SELECT * FROM pursesAndTargets")
-                while let row = try rows.next() {
-                    let currentPurseOrTarget = cursor.getPurseOrTarget(fromRow: row)
-                    pursesAndTarget.append(currentPurseOrTarget)
-                    print("currentPurseOrTarget: \(pursesAndTarget)")
-                }
-                print("pursesAndTarget: \(pursesAndTarget)")
-            }
-        } catch {
-            NSLog("Failed to read from database")
-        }
-        return pursesAndTarget
-    }
-    
-    func getCategories() -> [Category] {
-        var catigories: [Category] = []
-        do {
-            try self.dbQueue?.inDatabase { db in
-                let rows = try Row.fetchCursor(db, "SELECT * FROM pursesAndTargets")
-                while let row = try rows.next() {
-                    let currentCategory = cursor.getCategory(fromRow: row)
-                    catigories.append(currentCategory)
-                    print("currentCategory: \(currentCategory)")
-                }
-                print("catigories: \(catigories)")
-            }
-        } catch {
-            NSLog("Failed to read from database")
-        }
-        return catigories
-    }
-    
     func getCashDay() -> [CashDay] {
         var cashDay: [CashDay] = []
         let selectCashDay = """
-
                     SELECT sum(cash), date
                     FROM transactionTable
-                    WHERE purseOrTarget = 'Purse'
                     GROUP BY date
                     ORDER BY date DESC;
                     """
@@ -476,7 +347,7 @@ class DataBaseService: NSObject {
         return cashDay
     }
     
-    func getTransactionOnDay(_ day: Date, purseOrTarget: String) -> [Transaction] {
+    func getTransactionOnDay(_ day: Date) -> [Transaction] {
         var transactions: [Transaction] = []
         do {
             try self.dbQueue?.inDatabase { db in
@@ -484,7 +355,6 @@ class DataBaseService: NSObject {
                     SELECT *
                     FROM transactionTable
                     WHERE date = \(day)
-                    AND purseOrTarget = \(purseOrTarget)
                     ORDER BY date DESC;
                     """)
                 while let row = try rows.next() {
